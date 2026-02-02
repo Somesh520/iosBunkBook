@@ -1,24 +1,47 @@
-//
-//  ContentView.swift
-//  BunkBook
-//
-//  Created by Somesh Tiwari on 01/02/26.
-//
-
 import SwiftUI
+import UIKit
 
-struct ContentView: View {
+struct MainTabView: View {
+    @ObservedObject var viewModel: HomeViewModel
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+        TabView {
+            // 🏠 Home Tab
+            HomeScreen(viewModel: viewModel)
+                .tabItem {
+                    Image(systemName: "house.fill")
+                    Text("Home")
+                }
 
-#Preview {
-    ContentView()
+            // 📅 Schedule Tab
+            ScheduleScreen()
+                .tabItem {
+                    Image(systemName: "calendar")
+                    Text("Time Table")
+                }
+            
+            // 📝 Exams Tab (UPDATED ✅)
+            ExamMainView(viewModel: viewModel) // 🔥 Yahan change kiya hai
+                .tabItem {
+                    Image(systemName: "doc.text.fill")
+                    Text("Exams")
+                }
+            
+            // ℹ️ About Tab
+            AboutScreen()
+                .tabItem {
+                    Image(systemName: "info.circle")
+                    Text("About")
+                }
+        }
+        .accentColor(.blue)
+        .onAppear {
+            // Tab Bar Appearance Fix
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor.systemBackground
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
+    }
 }
