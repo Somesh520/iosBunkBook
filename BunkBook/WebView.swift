@@ -31,8 +31,10 @@ struct BunkWebView: UIViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         
-        // 🔥 Set User Agent
-        webView.customUserAgent = userAgent
+        // 🔥 Set User Agent (Only if provided)
+        if !userAgent.isEmpty {
+            webView.customUserAgent = userAgent
+        }
         
         return webView
     }
