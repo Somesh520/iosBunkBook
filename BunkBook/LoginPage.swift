@@ -21,9 +21,17 @@ struct LoginPage: View {
     // ⚡️ Fast Login Script (Token Capture - Runs Continuously)
     let fastLoginScript = """
       (function() {
-        // Poll for NEW Token
         var check = setInterval(function() {
             var token = localStorage.getItem('authenticationtoken');
+            if (!token) {
+                 token = sessionStorage.getItem('authenticationtoken');
+            }
+            if (!token) {
+                 // Try to find in cookie
+                 var match = document.cookie.match(new RegExp('(^| )authenticationtoken=([^;]+)'));
+                 if (match) token = match[2];
+            }
+
             if (token && token.length > 10) { 
                 clearInterval(check);
                 window.webkit.messageHandlers.ReactNativeWebView.postMessage(JSON.stringify({ token: token }));
@@ -229,45 +237,60 @@ struct LoginPage: View {
         
         let js = """
         (function() {
+            function setNativeValue(element, value) {
+                try {
+                    const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                    if (valueSetter) {
+                        valueSetter.call(element, value);
+                    } else {
+                        element.value = value;
+                    }
+                } catch (e) {
+                    element.value = value;
+                }
+                
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+                element.dispatchEvent(new Event('change', { bubbles: true })); 
+                element.dispatchEvent(new Event('blur', { bubbles: true }));
+            }
+
             function setVal(selector, val) {
                 var el = document.querySelector(selector);
                 if (el) {
-                    el.value = val;
-                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                    return true; // Success
+                    setNativeValue(el, val);
+                    return true;
                 }
                 return false;
             }
             
-            // 🔍 Try Multiple Selectors (Angular/React often vary)
             // 1. Username
             var u1 = setVal('input[type="text"]', '\(safeUser)');
             var u2 = setVal('input[name="username"]', '\(safeUser)');
-            var u3 = setVal('input[placeholder*="User"]', '\(safeUser)');
+            var u3 = setVal('input[name="user"]', '\(safeUser)');
+            var u4 = setVal('input[type="email"]', '\(safeUser)');
             
             // 2. Password
             var p1 = setVal('input[type="password"]', '\(safePass)');
             
             // 3. Click Login
-            if (u1 || u2 || u3) {
+            setTimeout(function() {
                  var btn = document.querySelector('button[type="submit"]') || 
                            document.querySelector('button.btn-primary') ||
                            document.querySelector('input[type="submit"]');
                  if(btn) { 
                      btn.click(); 
-                     return "CLICKED";
                  }
-            }
-            return "FAILED";
+            }, 500);
+            
+            return "EXECUTED";
         })();
         """
         
         // 🚀 Inject!
         injectScript = js
         
-        // Reset loading state if nothing happens after 10s
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+        // Reset loading state if nothing happens after 100s
+        DispatchQueue.main.asyncAfter(deadline: .now() + 100) {
             if self.authToken == nil {
                 self.loginAttempted = false
                 self.errorMessage = "Login timed out. Please check your credentials."
