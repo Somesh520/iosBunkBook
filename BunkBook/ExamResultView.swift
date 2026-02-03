@@ -13,33 +13,39 @@ struct ExamResultView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         // 🏆 CGPA Card
-                        VStack(spacing: 5) {
+                        VStack(spacing: 8) {
                             Text("Overall CGPA")
                                 .font(.headline)
                                 .foregroundColor(.white.opacity(0.8))
                             
                             Text(String(format: "%.2f", scores.cgpa ?? 0.0))
-                                .font(.system(size: 50, weight: .bold, design: .rounded))
+                                .font(.system(size: 60, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.1), radius: 5)
                             
                             Text(scores.fullName ?? "Student")
-                                .font(.caption)
+                                .font(.callout)
+                                .fontWeight(.medium)
                                 .foregroundColor(.white.opacity(0.9))
-                                .padding(.top, 5)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(25)
-                        .background(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .cornerRadius(20)
-                        .shadow(radius: 8)
+                        .padding(30)
+                        .background(
+                            LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        )
+                        .cornerRadius(24)
+                        .shadow(color: .purple.opacity(0.3), radius: 10, x: 0, y: 5)
                         .padding(.horizontal)
                         .padding(.top)
                         
                         // 📚 Semesters List
                         if let semesters = scores.studentSemesterWiseMarksDetailsList {
-                            ForEach(semesters) { semester in
-                                SemesterCard(semester: semester)
+                            VStack(spacing: 15) {
+                                ForEach(semesters) { semester in
+                                    SemesterCard(semester: semester)
+                                }
                             }
+                            .padding(.horizontal)
                         }
                     }
                     .padding(.bottom, 20)
@@ -49,18 +55,18 @@ struct ExamResultView: View {
                 }
             } else {
                 // Empty State
-                VStack {
+                VStack(spacing: 15) {
                     Image(systemName: "chart.bar.doc.horizontal")
-                        .font(.largeTitle)
-                        .foregroundColor(.gray)
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray.opacity(0.3))
                     Text("No Results Found")
+                        .font(.title3)
                         .foregroundColor(.gray)
-                        .padding(.top, 5)
                     
                     Button("Retry") {
                         Task { await viewModel.fetchScores() }
                     }
-                    .padding(.top, 10)
+                    .foregroundColor(.blue)
                 }
             }
         }
@@ -72,7 +78,7 @@ struct ExamResultView: View {
     }
 }
 
-// Sub-View: Semester Card (Expandable)
+// 🔷 Premium Semester Card
 struct SemesterCard: View {
     let semester: SemesterScore
     @State private var isExpanded = false
@@ -80,37 +86,45 @@ struct SemesterCard: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            Button(action: { withAnimation { isExpanded.toggle() } }) {
-                HStack {
-                    VStack(alignment: .leading) {
+            Button(action: { withAnimation(.easeInOut(duration: 0.3)) { isExpanded.toggle() } }) {
+                HStack(spacing: 15) {
+                    // SGPA Box
+                    VStack(spacing: 2) {
+                        Text("SGPA")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white.opacity(0.9))
+                        Text(String(format: "%.2f", semester.sgpa ?? 0.0))
+                            .font(.title3)
+                            .fontWeight(.heavy)
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 60, height: 60)
+                    .background(
+                        LinearGradient(colors: [getSgpaColor(semester.sgpa ?? 0), getSgpaColor(semester.sgpa ?? 0).opacity(0.8)], startPoint: .top, endPoint: .bottom)
+                    )
+                    .cornerRadius(12)
+                    .shadow(color: getSgpaColor(semester.sgpa ?? 0).opacity(0.3), radius: 4, y: 2)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Semester \(semester.semesterName ?? "-")")
-                            .font(.headline)
+                            .font(.title3)
+                            .fontWeight(.bold)
                             .foregroundColor(.primary)
+                        
                         Text(semester.sessionName ?? "")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+                    
                     Spacer()
-                    VStack {
-                        Text("SGPA")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.white)
-                        Text(String(format: "%.2f", semester.sgpa ?? 0.0))
-                            .font(.callout)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                    }
-                    .padding(8)
-                    .background(Color.green)
-                    .cornerRadius(8)
                     
                     Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.gray.opacity(0.5))
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                        .foregroundColor(.gray)
-                        .padding(.leading, 8)
                 }
-                .padding()
-                .background(Color(uiColor: .secondarySystemGroupedBackground))
+                .padding(12)
+                .background(Color(uiColor: .systemBackground))
             }
             
             // Expanded Subjects List
@@ -118,36 +132,61 @@ struct SemesterCard: View {
                 Divider()
                 VStack(spacing: 0) {
                     if let subjects = semester.studentMarksDetailsDTO {
-                        ForEach(subjects) { subject in
-                            HStack {
-                                VStack(alignment: .leading) {
+                        ForEach(subjects.indices, id: \.self) { index in
+                            let subject = subjects[index]
+                            HStack(alignment: .top, spacing: 12) {
+                                Circle()
+                                    .fill(getGradeColor(subject.finalGrade))
+                                    .frame(width: 8, height: 8)
+                                    .padding(.top, 6)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(subject.courseName ?? "Unknown")
                                         .font(.subheadline)
                                         .fontWeight(.medium)
+                                        .foregroundColor(.primary)
                                         .lineLimit(2)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    Text(subject.courseCode ?? "")
-                                        .font(.caption2)
-                                        .foregroundColor(.gray)
+                                    
+                                    if let code = subject.courseCode {
+                                        Text(code)
+                                            .font(.caption2)
+                                            .fontWeight(.bold)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.gray.opacity(0.1))
+                                            .cornerRadius(4)
+                                            .foregroundColor(.gray)
+                                    }
                                 }
+                                
                                 Spacer()
+                                
                                 Text(subject.finalGrade)
-                                    .font(.headline)
+                                    .font(.title3)
                                     .fontWeight(.bold)
                                     .foregroundColor(getGradeColor(subject.finalGrade))
-                                    .frame(width: 35)
                             }
                             .padding()
-                            Divider()
+                            .background(index % 2 == 0 ? Color.gray.opacity(0.02) : Color.white)
+                            
+                            if index < subjects.count - 1 {
+                                Divider().padding(.leading, 40)
+                            }
                         }
                     }
                 }
-                .background(Color(uiColor: .secondarySystemGroupedBackground))
+                .background(Color(uiColor: .systemBackground))
             }
         }
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        .padding(.horizontal)
+        .background(Color(uiColor: .systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
+    }
+    
+    func getSgpaColor(_ sgpa: Double) -> Color {
+        if sgpa >= 8.0 { return .green }
+        if sgpa >= 6.0 { return .blue }
+        return .orange
     }
     
     func getGradeColor(_ grade: String) -> Color {

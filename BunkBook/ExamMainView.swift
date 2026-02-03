@@ -12,6 +12,7 @@ struct ExamMainView: View {
                     Picker("Options", selection: $selectedTab) {
                         Text("Schedule").tag(0)
                         Text("Results").tag(1)
+                        Text("Hall Ticket").tag(2)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .padding()
@@ -19,13 +20,16 @@ struct ExamMainView: View {
                 .background(Color.white)
                 
                 // Content
-                if selectedTab == 0 {
-                    // Purana Exam Schedule Screen (Same logic)
-                    ExamScheduleScreen(viewModel: viewModel)
-                } else {
-                    // Naya Result View
-                    ExamResultView(viewModel: viewModel)
-                }
+                    if selectedTab == 0 {
+                        // Purana Exam Schedule Screen (Same logic)
+                        ExamScheduleScreen(viewModel: viewModel)
+                    } else if selectedTab == 1 {
+                        // Naya Result View 
+                        ExamResultView(viewModel: viewModel)
+                    } else {
+                        // 🎫 New Hall Ticket View
+                        HallTicketView(viewModel: viewModel)
+                    }
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Exams")

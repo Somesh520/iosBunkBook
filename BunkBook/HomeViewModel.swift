@@ -101,6 +101,51 @@ struct APIManager {
         return wrapper.data?.first?.lectureList ?? []
     }
     
+    // 🎫 Hall Ticket APIs
+    
+    static func fetchExamSessions(token: String, studentId: Int) async throws -> [ExamSession] {
+        let url = "\(APIConfig.baseURL)/exam/form/session/config/getById/student/\(studentId)"
+        let data = try await performRequest(url: url, token: token)
+        let wrapper = try JSONDecoder().decode(APIResponse<[ExamSession]>.self, from: data)
+        return wrapper.data ?? []
+    }
+    
+    static func fetchHallTicketOptions(token: String, sessionId: Int) async throws -> [HallTicketOption] {
+        let url = "\(APIConfig.baseURL)/exam/hall-ticket/student/download/options/\(sessionId)"
+        let data = try await performRequest(url: url, token: token)
+        let wrapper = try JSONDecoder().decode(APIResponse<[HallTicketOption]>.self, from: data)
+        return wrapper.data ?? []
+    }
+    
+    static func downloadHallTicket(token: String, ticketId: Int) async throws -> (URL, String) {
+        let urlStr = "\(APIConfig.baseURL)/report/pdf/exam/student/hall-ticket/download/\(ticketId)"
+        guard let url = URL(string: urlStr) else { throw URLError(.badURL) }
+        
+        var request = URLRequest(url: url)
+        setupHeaders(request: &request, token: token)
+        
+        // Use downloadTask to get file location
+        let (tempURL, response) = try await URLSession.shared.download(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+        
+        // Generate a suggested filename (e.g. from Content-Disposition or default)
+        // For now, simple default:
+        let filename = "HallTicket_\(ticketId).pdf"
+        
+        // Move from tempURL to a temporary accessible location
+        let fileManager = FileManager.default
+        let newURL = fileManager.temporaryDirectory.appendingPathComponent(filename)
+        
+        // Remove if exists
+        try? fileManager.removeItem(at: newURL)
+        try fileManager.moveItem(at: tempURL, to: newURL)
+        
+        return (newURL, filename)
+    }
+    
     private static func performRequest(url: String, token: String) async throws -> Data {
         guard let serverURL = URL(string: url) else { throw URLError(.badURL) }
         var request = URLRequest(url: serverURL)
@@ -149,6 +194,13 @@ class HomeViewModel: ObservableObject {
     @Published var exams: [ExamSchedule] = []
     @Published var examScores: ScoreData?
     
+    // 🎫 Hall Ticket State
+    @Published var hallTicketSessions: [ExamSession] = []
+    @Published var selectedSession: ExamSession?
+    @Published var hallTickets: [HallTicketOption] = []
+    @Published var isTicketLoading = false
+    @Published var ticketError: String?
+    
     @Published var isLoading = true
     @Published var isExamLoading = false
     @Published var isScoreLoading = false
@@ -157,6 +209,7 @@ class HomeViewModel: ObservableObject {
     
     private var hasFetchedExams = false
     private var hasFetchedScores = false
+    private var hasFetchedSessions = false
 
     var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -317,6 +370,67 @@ class HomeViewModel: ObservableObject {
             print("ℹ️ Scores not available or fetch failed: \(error.localizedDescription)")
         }
         self.isScoreLoading = false
+    }
+    
+    // 🎫 Hall Ticket Logic
+    
+    func fetchSessions() async {
+        if hasFetchedSessions { return }
+        // We need studentId from Courses (RegisteredCourse)
+        // If not loaded, we can't load sessions safely without parsing the ID first.
+        // Assuming fetchCourses() has run and populated self.courses
+        
+        guard let firstCourse = self.courses.first else {
+            print("⚠️ No courses loaded, cannot deduce studentId")
+            return
+        }
+        
+        let studentId = firstCourse.studentId
+        self.isTicketLoading = true
+        self.ticketError = nil
+        
+        guard let token = UserDefaults.standard.string(forKey: "authToken") else { return }
+        
+        do {
+            let sessions = try await APIManager.fetchExamSessions(token: token, studentId: studentId)
+            self.hallTicketSessions = sessions
+            
+            if let first = sessions.first {
+                self.selectedSession = first
+                await fetchTickets(for: first.sessionId)
+            }
+            self.hasFetchedSessions = true
+        } catch {
+            self.ticketError = "Failed to load sessions"
+            print("❌ Session Fetch Error: \(error)")
+        }
+        self.isTicketLoading = false
+    }
+    
+    func fetchTickets(for sessionId: Int) async {
+        self.isTicketLoading = true
+        self.hallTickets = [] // Clear previous
+        guard let token = UserDefaults.standard.string(forKey: "authToken") else { return }
+        
+        do {
+            let tickets = try await APIManager.fetchHallTicketOptions(token: token, sessionId: sessionId)
+            self.hallTickets = tickets
+        } catch {
+            self.ticketError = "Failed to load tickets"
+            print("❌ Ticket Fetch Error: \(error)")
+        }
+        self.isTicketLoading = false
+    }
+    
+    func downloadTicket(ticket: HallTicketOption) async -> URL? {
+        guard let token = UserDefaults.standard.string(forKey: "authToken") else { return nil }
+        do {
+            let (url, _) = try await APIManager.downloadHallTicket(token: token, ticketId: ticket.id)
+            return url
+        } catch {
+            print("❌ Download Failed: \(error)")
+            return nil
+        }
     }
     
     func fetchSecureImage(url: String, token: String) {

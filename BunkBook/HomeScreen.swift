@@ -94,6 +94,18 @@ struct HomeScreen: View {
                                 
                                 Spacer()
                                 
+                                // 🔔 Notification Debug
+                                NavigationLink(destination: NotificationDebugView()) {
+                                    Image(systemName: "bell.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.blue)
+                                        .padding(10)
+                                        .background(
+                                            Circle()
+                                                .fill(Color.blue.opacity(0.1))
+                                        )
+                                }
+                                
                                 Button(action: {
                                     showLogoutAlert = true
                                 }) {

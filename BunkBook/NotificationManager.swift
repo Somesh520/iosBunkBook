@@ -23,7 +23,7 @@ class NotificationManager: NSObject {
     }
     
     // 2. Schedule Notification
-    func scheduleNotification(title: String, body: String, timeInterval: TimeInterval) {
+    func scheduleNotification(title: String, body: String, timeInterval: TimeInterval, identifier: String? = nil) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
@@ -31,14 +31,15 @@ class NotificationManager: NSObject {
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
         
-        // Unique ID based on time
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        // Use custom identifier or generate unique one
+        let notificationId = identifier ?? UUID().uuidString
+        let request = UNNotificationRequest(identifier: notificationId, content: content, trigger: trigger)
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("❌ Failed to schedule notification: \(error)")
             } else {
-                print("📢 Notification Scheduled: \(title) - in \(timeInterval) seconds")
+                print("📢 Notification Scheduled: \(title) - in \(timeInterval) seconds (ID: \(notificationId))")
             }
         }
     }
@@ -46,6 +47,20 @@ class NotificationManager: NSObject {
     // 3. Clear Badges
     func clearBadges() {
         UNUserNotificationCenter.current().setBadgeCount(0)
+    }
+    
+    // 4. Get Pending (Debug)
+    func getPendingNotifications(completion: @escaping ([UNNotificationRequest]) -> Void) {
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            DispatchQueue.main.async {
+                completion(requests)
+            }
+        }
+    }
+    
+    // 5. Test Notification
+    func scheduleTestNotification() {
+        scheduleNotification(title: "Debug Test", body: "Checking if notifications work!", timeInterval: 5)
     }
 }
 

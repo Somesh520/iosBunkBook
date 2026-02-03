@@ -150,3 +150,17 @@ struct SessionMarks: Codable {
     let marksObtained: Double?
     let marksOutOf: Double?
 }
+
+// 8. 🎫 Hall Ticket Models
+
+struct ExamSession: Codable, Identifiable, Hashable {
+    let sessionId: Int
+    let sessionName: String
+    
+    var id: Int { sessionId }
+}
+
+struct HallTicketOption: Codable, Identifiable {
+    let id: Int // This is the hallTicketId used for download
+    let title: String
+}
