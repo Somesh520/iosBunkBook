@@ -2,12 +2,16 @@ import SwiftUI
 import WebKit
 
 // 🌐 WEBVIEW COMPONENT (iOS Only)
+// 🌐 WEBVIEW COMPONENT (iOS Only)
 struct BunkWebView: UIViewRepresentable {
     let url: URL
     let script: String
     let userAgent: String
     @Binding var isLoading: Double
     var onMessage: (String) -> Void
+    
+    // ⚡️ New: Allow External Script Injection
+    @Binding var injectScript: String?
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -17,12 +21,12 @@ struct BunkWebView: UIViewRepresentable {
         // 🔥 CRITICAL FIX: Cookies/Cache enable
         config.websiteDataStore = WKWebsiteDataStore.default()
         
+        // ⚡️ Faster Rendering
+        config.preferences.javaScriptCanOpenWindowsAutomatically = false
+        
         let controller = WKUserContentController()
         controller.add(context.coordinator, name: "ReactNativeWebView")
         config.userContentController = controller
-        
-        // ⚡️ Faster Rendering
-        config.preferences.javaScriptCanOpenWindowsAutomatically = false
         
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
@@ -41,6 +45,18 @@ struct BunkWebView: UIViewRepresentable {
             request.cachePolicy = .useProtocolCachePolicy
             request.timeoutInterval = 15 // Fail fast if stuck
             uiView.load(request)
+        }
+        
+        // 💉 Handle Script Injection
+        if let script = injectScript {
+            print("💉 Injecting Script...")
+            uiView.evaluateJavaScript(script) { _, error in
+                if let error = error { print("❌ Injection Error: \(error.localizedDescription)") }
+            }
+            // Reset after injection
+            DispatchQueue.main.async {
+                self.injectScript = nil // Reset to avoid loop
+            }
         }
     }
 
