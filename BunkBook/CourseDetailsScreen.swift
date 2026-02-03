@@ -15,29 +15,29 @@ struct CourseDetailsScreen: View {
     // Animation State
     @State private var showContent = false
     
+    // Environment
+    @Environment(\.presentationMode) var presentationMode
+    
     var body: some View {
         ZStack {
             Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Header
+                // Custom Header
+                // The image shows "Lecture Details" in nav bar, and Course Name below it.
+                
+                // Course Name Title
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(courseCode)
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .padding(6)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(6)
-                    
                     Text(courseName)
-                        .font(.title3)
+                        .font(.title2) // Matches "Universal Human Values" size
                         .fontWeight(.bold)
-                        .lineLimit(2)
+                        .foregroundColor(.primary) // Adaptive Color
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-                .background(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
+                
+                Divider()
                 
                 // Content List
                 if isLoading {
@@ -78,23 +78,23 @@ struct CourseDetailsScreen: View {
                     }
                     .frame(maxHeight: .infinity)
                 } else {
-                    // 📜 Lecture List
-                    List {
-                        ForEach(lectures) { lecture in
-                            LectureRow(lecture: lecture)
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
-                                .padding(.vertical, 4)
+                    // 📜 Lecture List (ScrollView for Cards)
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(lectures) { lecture in
+                                LectureRow(lecture: lecture)
+                            }
                         }
+                        .padding()
+                        .opacity(showContent ? 1 : 0) // Fade In Animation
+                        .animation(.easeIn(duration: 0.3), value: showContent)
                     }
-                    .listStyle(PlainListStyle())
-                    .padding(.horizontal)
-                    .opacity(showContent ? 1 : 0) // Fade In Animation
-                    .animation(.easeIn(duration: 0.3), value: showContent)
                 }
             }
         }
+        .navigationTitle("Lecture Details")
         .navigationBarTitleDisplayMode(.inline)
+        .background(Color(uiColor: .systemGroupedBackground))
         // 🔥 CRITICAL FIX: Use .task instead of .onAppear to prevent loops
         .task {
             if lectures.isEmpty {
@@ -148,13 +148,46 @@ struct CourseDetailsScreen: View {
     }
 }
 
-// 📌 Lecture Row Component
+// 📌 Lecture Row Component (Card Style)
 struct LectureRow: View {
     let lecture: Lecture
     
-    var isPresent: Bool {
-        let status = lecture.attendance.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        return status == "P" || status == "PRESENT"
+    // Helper for Status
+    enum Status {
+        case present
+        case absent
+        case notMarked
+        
+        var color: Color {
+            switch self {
+            case .present: return Color(red: 0.0, green: 0.7, blue: 0.3) // Green
+            case .absent: return Color(red: 0.85, green: 0.2, blue: 0.2) // Red
+            case .notMarked: return Color(red: 0.85, green: 0.2, blue: 0.2) // Red (As per image)
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .present: return "checkmark.circle"
+            case .absent: return "xmark.circle"
+            case .notMarked: return "xmark.circle" // Assuming 'x' for not marked too?
+            }
+        }
+        
+        var text: String {
+            switch self {
+            case .present: return "PRESENT"
+            case .absent: return "ABSENT"
+            case .notMarked: return "NOT MARKED"
+            }
+        }
+    }
+    
+    var status: Status {
+        let s = lecture.attendance.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if s == "P" || s == "PRESENT" { return .present }
+        if s == "A" || s == "ABSENT" { return .absent }
+        return .notMarked
     }
     
     var formattedDate: String {
@@ -164,55 +197,45 @@ struct LectureRow: View {
         
         if let date = inputFormatter.date(from: lecture.planLecDate) {
             let outputFormatter = DateFormatter()
-            outputFormatter.dateFormat = "d MMM" // "28 Jan"
+            outputFormatter.dateFormat = "dd MMM yyyy" // "30 Jan 2026"
             return outputFormatter.string(from: date)
         }
         return lecture.planLecDate
     }
     
     var body: some View {
-        HStack(alignment: .top, spacing: 15) {
-            // Status Icon (replaced with Text)
-            ZStack {
-                Circle()
-                    .fill(isPresent ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
-                    .frame(width: 40, height: 40)
-                
-                Text(isPresent ? "P" : "A") // 🔡 Changed Icon to Text
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(isPresent ? .green : .red)
-            }
-            
-            // Details
-            VStack(alignment: .leading, spacing: 6) {
-                // If Topic is missing, use Date as Title (Big Font)
-                if lecture.topicCovered == nil || lecture.topicCovered == "No Topic Mentioned" {
-                    Text(formattedDate)
-                        .font(.title3) // ✨ Bigger & Cleaner
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                        .padding(.vertical, 2) // Center slighty
-                } else {
-                    Text(formattedDate) // 🗓 Small Date
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.secondary)
-                        .textCase(.uppercase) // 🎨 Added style
-                    
-                    Text(lecture.topicCovered ?? "")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                        .lineLimit(2)
-                }
-            }
+        HStack {
+            // Left: Date
+            Text(formattedDate)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.gray)
+                .padding(.leading, 8)
             
             Spacer()
+            
+            // Right: Status Capsule
+            HStack(spacing: 6) {
+                Image(systemName: status.icon)
+                    .font(.system(size: 14, weight: .bold))
+                
+                Text(status.text)
+                    .font(.system(size: 13, weight: .bold))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(status.color)
+            .clipShape(Capsule())
         }
-        .padding()
-        .background(Color.white)
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+        // Card Shadow
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+        )
     }
 }
 
@@ -221,24 +244,19 @@ struct SkeletonRow: View {
     @State private var blink = false
     
     var body: some View {
-        HStack(spacing: 15) {
-            Circle()
+        HStack {
+            RoundedRectangle(cornerRadius: 4)
                 .fill(Color.gray.opacity(0.2))
-                .frame(width: 40, height: 40)
+                .frame(width: 100, height: 16)
             
-            VStack(alignment: .leading, spacing: 8) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(width: 80, height: 12)
-                
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(width: 150, height: 12)
-            }
             Spacer()
+            
+            RoundedRectangle(cornerRadius: 15)
+                .fill(Color.gray.opacity(0.2))
+                .frame(width: 100, height: 30)
         }
-        .padding()
-        .background(Color.white)
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(12)
         .opacity(blink ? 0.5 : 1.0)
         .onAppear {

@@ -83,9 +83,9 @@ struct CourseCard: View {
     }
     
     var statusBoxColor: Color {
-        if safeBunks > 0 { return Color(red: 0.9, green: 1.0, blue: 0.9) } // Light Green
-        if percent >= 75 { return Color(red: 1.0, green: 0.95, blue: 0.8) } // Light Yellow/Orange
-        return Color(red: 1.0, green: 0.9, blue: 0.9) // Light Red
+        if safeBunks > 0 { return Color.green.opacity(0.15) }
+        if percent >= 75 { return Color.orange.opacity(0.15) }
+        return Color.red.opacity(0.15)
     }
     
     var statusIcon: String {
@@ -163,11 +163,11 @@ struct CourseCard: View {
                     Text(statusTitle)
                         .font(.subheadline)
                         .fontWeight(.bold)
-                        .foregroundColor(.black.opacity(0.8))
+                        .foregroundColor(.primary.opacity(0.8))
                     
                     Text(statusSubtitle)
                         .font(.caption)
-                        .foregroundColor(.black.opacity(0.6))
+                        .foregroundColor(.primary.opacity(0.6))
                         .lineLimit(2)
                 }
                 Spacer()
@@ -186,7 +186,7 @@ struct CourseCard: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .overlay(
@@ -247,7 +247,7 @@ struct StudentProfileCard: View {
                     ProfileRow(icon: "books.vertical", title: "Semester", value: user?.semesterName ?? "N/A")
                 }
                 .padding(16)
-                .background(Color.white)
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
                 .cornerRadius(16)
                 .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
                 .overlay(
@@ -292,7 +292,7 @@ struct StudentProfileCard: View {
                     Spacer()
                 }
                 .padding(16)
-                .background(Color.white)
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
                 .cornerRadius(16)
                 .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
                 .overlay(

@@ -90,7 +90,7 @@ struct ExamCard: View {
                     .foregroundColor(.blue)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Color.blue.opacity(0.1))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground).opacity(0.1))
                     .cornerRadius(10)
             }
             
@@ -109,7 +109,7 @@ struct ExamCard: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
@@ -169,7 +169,7 @@ struct ExamSkeletonCard: View {
                 .frame(width: 200, height: 16)
         }
         .padding()
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(12)
         .opacity(blink ? 0.5 : 1.0)
         .onAppear {

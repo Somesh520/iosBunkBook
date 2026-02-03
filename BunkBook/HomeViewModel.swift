@@ -308,7 +308,6 @@ class HomeViewModel: ObservableObject {
     func fetchSecureImage(url: String, token: String) {
         guard let imageUrl = URL(string: url) else { return }
         var request = URLRequest(url: imageUrl)
-        // 🟢 Pass-through token
         request.addValue(token, forHTTPHeaderField: "Authorization")
         request.addValue(APIManager.userAgent, forHTTPHeaderField: "User-Agent")
         

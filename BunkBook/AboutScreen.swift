@@ -1,10 +1,27 @@
 import SwiftUI
 
+struct DeveloperProfile: Identifiable {
+    let id = UUID()
+    let name: String
+    let role: String
+    let color: Color
+    let linkedinURL: String
+    let image: String // Placeholder for now
+}
+
 struct AboutScreen: View {
+    @Environment(\.openURL) var openURL
+    
+    let developers = [
+        DeveloperProfile(name: "Satyam Singh", role: "Developer", color: .green, linkedinURL: "https://www.linkedin.com/in/satyam-singh-4510b9323/", image: "person.fill"),
+        DeveloperProfile(name: "Somesh Tiwari", role: "Developer", color: .blue, linkedinURL: "https://www.linkedin.com/in/somesh-tiwari-236555322/", image: "person.fill"),
+        DeveloperProfile(name: "Vishek Tyagi", role: "Developer", color: .orange, linkedinURL: "https://www.linkedin.com/in/vishek-tyagi-a42b18313/", image: "person.fill")
+    ]
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 25) {
-                // 🎨 Header
+                // 🎨 Header (Original Simple Style)
                 ZStack {
                     LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
                         .frame(height: 200)
@@ -13,16 +30,19 @@ struct AboutScreen: View {
                         .padding(.bottom, -50)
                     
                     VStack {
-                        Image(systemName: "app.badge.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.white)
+                        Image("AppLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 120, height: 120)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white, lineWidth: 4))
                             .shadow(radius: 10)
                         
                         Text("BunkBook")
                             .font(.system(size: 32, weight: .black, design: .rounded))
                             .foregroundColor(.white)
                         
-                        Text("v1.0.0")
+                        Text("v1.0.1")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.8))
                             .padding(.top, 2)
@@ -38,9 +58,9 @@ struct AboutScreen: View {
                     .padding(.horizontal)
                 
                 VStack(spacing: 16) {
-                    DeveloperCard(name: "Somesh Tiwari", role: "Developer", color: .blue)
-                    DeveloperCard(name: "Vishek Tyagi", role: "Developer", color: .orange)
-                    DeveloperCard(name: "Satyam Singh", role: "Developer", color: .green)
+                    ForEach(developers) { dev in
+                        DeveloperCard(profile: dev)
+                    }
                 }
                 .padding(.horizontal)
                 
@@ -58,48 +78,59 @@ struct AboutScreen: View {
     }
 }
 
+// Simple Original Card + LinkedIn
 struct DeveloperCard: View {
-    let name: String
-    let role: String
-    let color: Color
+    let profile: DeveloperProfile
+    @Environment(\.openURL) var openURL
     
     var body: some View {
         HStack(spacing: 15) {
-            // Avatar Placeholder
+            // Avatar
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.1))
+                    .fill(profile.color.opacity(0.1))
                     .frame(width: 50, height: 50)
                 
-                Text(String(name.prefix(1)))
+                Text(String(profile.name.prefix(1)))
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(color)
+                    .foregroundColor(profile.color)
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(name)
+                Text(profile.name)
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
-                Text(role)
+                Text(profile.role)
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
-                    .background(Color.secondary.opacity(0.1))
+                    .background(Color(uiColor: .tertiarySystemGroupedBackground))
                     .cornerRadius(4)
             }
             
             Spacer()
             
-            Image(systemName: "chevron.right")
-                .foregroundColor(.gray.opacity(0.5))
+            // Link Button
+            Button(action: {
+                if let url = URL(string: profile.linkedinURL) {
+                    openURL(url)
+                }
+            }) {
+                Image(systemName: "link")
+                    .font(.system(size: 20, weight: .semibold)) // Bigger icon
+                    .foregroundColor(.blue.opacity(0.8))
+                    .padding(10)
+                    .background(Color.blue.opacity(0.1))
+                    .clipShape(Circle())
+            }
         }
         .padding()
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }

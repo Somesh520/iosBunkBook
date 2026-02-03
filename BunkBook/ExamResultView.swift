@@ -110,7 +110,7 @@ struct SemesterCard: View {
                         .padding(.leading, 8)
                 }
                 .padding()
-                .background(Color.white)
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
             }
             
             // Expanded Subjects List

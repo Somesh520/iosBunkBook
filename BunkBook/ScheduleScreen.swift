@@ -180,7 +180,6 @@ struct ScheduleScreen: View {
                     }
                 }
             }
-            .navigationBarHidden(true)
             .onAppear {
                 generateCalendarDays()
                 Task { await loadData() }
@@ -266,7 +265,7 @@ struct CalendarDayItem: View {
                 }
             }
             .frame(width: 60, height: 75)
-            .background(isSelected ? Color.blue : Color.white)
+            .background(isSelected ? Color.blue : Color(uiColor: .secondarySystemGroupedBackground))
             .cornerRadius(16)
             .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
             .scaleEffect(isSelected ? 1.05 : 1.0)
@@ -323,7 +322,7 @@ struct ClassCard: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.bottom, 20)
@@ -364,10 +363,10 @@ struct SkeletonCard: View {
                 RoundedRectangle(cornerRadius: 4).fill(Color.gray.opacity(0.2)).frame(height: 18)
                 RoundedRectangle(cornerRadius: 4).fill(Color.gray.opacity(0.1)).frame(width: 150, height: 14)
             }
-            .padding().background(Color.white).cornerRadius(12).frame(maxWidth: .infinity)
+            .padding().background(Color(uiColor: .secondarySystemGroupedBackground)).cornerRadius(12).frame(maxWidth: .infinity)
         }
         .opacity(blink ? 0.5 : 1.0)
-        // .onAppear { withAnimation(Animation.easeInOut(duration: 0.8).repeatForever()) { blink = true } }
+       
     }
 }
 

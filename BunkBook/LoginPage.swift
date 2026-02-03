@@ -33,9 +33,10 @@ struct LoginPage: View {
       })();
     """
 
+// ...
     var body: some View {
         ZStack {
-            WebView(url: loginURL, script: fastLoginScript, userAgent: userAgent, isLoading: $isLoading, onMessage: handleMessage)
+            BunkWebView(url: loginURL, script: fastLoginScript, userAgent: userAgent, isLoading: $isLoading, onMessage: handleMessage)
                 .ignoresSafeArea()
             
             if isLoading > 0.1 {
@@ -54,7 +55,7 @@ struct LoginPage: View {
         }
         .onAppear {
             print("🧹 Resetting WebView Session...")
-            WebView.clearWebViewData()
+            BunkWebView.clearWebViewData()
         }
     }
     
@@ -84,72 +85,3 @@ struct LoginPage: View {
     }
 }
 
-// 🌐 WEBVIEW COMPONENT (With Anti-Bot Fixes)
-struct WebView: UIViewRepresentable {
-    let url: URL
-    let script: String
-    let userAgent: String
-    @Binding var isLoading: Double
-    var onMessage: (String) -> Void
-
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    func makeUIView(context: Context) -> WKWebView {
-        let config = WKWebViewConfiguration()
-        
-        // 🔥 CRITICAL FIX: Default Data Store use karo (Cookies/Cache enable)
-        // Isse website ko lagega ye Real Browser hai, Bot nahi.
-        config.websiteDataStore = WKWebsiteDataStore.default()
-        
-        let controller = WKUserContentController()
-        controller.add(context.coordinator, name: "ReactNativeWebView")
-        config.userContentController = controller
-        
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = context.coordinator
-        
-        // 🔥 Set User Agent on WebView Instance
-        webView.customUserAgent = userAgent
-        
-        return webView
-    }
-
-    func updateUIView(_ uiView: WKWebView, context: Context) {
-        if uiView.url == nil {
-            var request = URLRequest(url: url)
-            // 🔥 Headers mein bhi User-Agent bhejo
-            request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-            uiView.load(request)
-        }
-    }
-
-    static func clearWebViewData() {
-        // Sirf tab call karna jab logout karein
-        HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
-        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            records.forEach { WKWebsiteDataStore.default().removeData(ofTypes: $0.dataTypes, for: [$0], completionHandler: {}) }
-        }
-    }
-
-    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
-        var parent: WebView
-        init(_ parent: WebView) { self.parent = parent }
-        
-        func userContentController(_ cc: WKUserContentController, didReceive msg: WKScriptMessage) {
-            if let body = msg.body as? String { parent.onMessage(body) }
-        }
-        
-        
-        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            DispatchQueue.main.async { self.parent.isLoading = 1.0 }
-        }
-        
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            webView.evaluateJavaScript(parent.script)
-            // Delay removing loader slightly to avoid white flash
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.parent.isLoading = 0.0
-            }
-        }
-    }
-}

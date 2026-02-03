@@ -5,7 +5,7 @@ struct HomeScreen: View {
     @AppStorage("authToken") var authToken: String? // 💾 Logout ke liye zaroori hai
 
     // 🎨 Theme Colors
-    let cardBg = Color.white.opacity(0.9)
+    let cardBg = Color(uiColor: .secondarySystemGroupedBackground).opacity(0.9)
 
     var body: some View {
         NavigationStack {
@@ -75,7 +75,7 @@ struct HomeScreen: View {
                         }
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
                     .cornerRadius(20)
                     .shadow(radius: 10)
                     .padding(30)
@@ -164,7 +164,9 @@ struct HomeScreen: View {
                     }
                 }
             }
+            #if os(iOS)
             .navigationBarHidden(true)
+            #endif
         }
     }
 }

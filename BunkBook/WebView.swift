@@ -1,27 +1,37 @@
-
 import SwiftUI
 import WebKit
 
-struct WebView: UIViewRepresentable {
+// 🌐 WEBVIEW COMPONENT (iOS Only)
+struct BunkWebView: UIViewRepresentable {
     let url: URL
     let script: String
     let userAgent: String
     @Binding var isLoading: Double
     var onMessage: (String) -> Void
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
+    // 🚀 Performance: Shared Process Pool
+    static let sharedProcessPool = WKProcessPool()
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
-        let userContentController = WKUserContentController()
+        config.processPool = BunkWebView.sharedProcessPool // ✅ Faster Re-init
         
-        userContentController.add(context.coordinator, name: "ReactNativeWebView")
-        config.userContentController = userContentController
+        // 🔥 CRITICAL FIX: Cookies/Cache enable
+        config.websiteDataStore = WKWebsiteDataStore.default()
+        
+        let controller = WKUserContentController()
+        controller.add(context.coordinator, name: "ReactNativeWebView")
+        config.userContentController = controller
+        
+        // ⚡️ Faster Rendering
+        config.preferences.javaScriptCanOpenWindowsAutomatically = false
         
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
+        
+        // 🔥 Set User Agent
         webView.customUserAgent = userAgent
         
         return webView
@@ -29,12 +39,15 @@ struct WebView: UIViewRepresentable {
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
         if uiView.url == nil {
-            let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+            var request = URLRequest(url: url)
+            request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+            request.networkServiceType = .responsiveData // ⚡️ Prioritize
+            request.cachePolicy = .useProtocolCachePolicy
+            request.timeoutInterval = 15 // Fail fast if stuck
             uiView.load(request)
         }
     }
 
-    // ✅ Clear Data Function (Most Important)
     static func clearWebViewData() {
         print("🧹 Clearing WebView Data...")
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
@@ -46,25 +59,23 @@ struct WebView: UIViewRepresentable {
     }
 
     class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
-        var parent: WebView
-
-        init(_ parent: WebView) {
-            self.parent = parent
-        }
-
-        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            if let body = message.body as? String {
-                parent.onMessage(body)
-            }
-        }
-
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            webView.evaluateJavaScript(parent.script, completionHandler: nil)
-            parent.isLoading = 0.0
+        var parent: BunkWebView
+        init(_ parent: BunkWebView) { self.parent = parent }
+        
+        func userContentController(_ cc: WKUserContentController, didReceive msg: WKScriptMessage) {
+            if let body = msg.body as? String { parent.onMessage(body) }
         }
         
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            parent.isLoading = 0.2
+            DispatchQueue.main.async { self.parent.isLoading = 0.2 }
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            webView.evaluateJavaScript(parent.script, completionHandler: nil)
+            // ⚡️ Quicker Transition
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.parent.isLoading = 0.0
+            }
         }
     }
 }

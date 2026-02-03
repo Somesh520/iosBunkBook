@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 
 struct MainTabView: View {
     @ObservedObject var viewModel: HomeViewModel
@@ -36,12 +38,14 @@ struct MainTabView: View {
         }
         .accentColor(.blue)
         .onAppear {
+            #if canImport(UIKit)
             // Tab Bar Appearance Fix
             let appearance = UITabBarAppearance()
             appearance.configureWithOpaqueBackground()
             appearance.backgroundColor = UIColor.systemBackground
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
+            #endif
         }
     }
 }
