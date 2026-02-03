@@ -160,9 +160,11 @@ class HomeViewModel: ObservableObject {
 
     var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
+        if hour < 4 { return "Good Night," } // Late Night
         if hour < 12 { return "Good Morning," }
         if hour < 17 { return "Good Afternoon," }
-        return "Good Evening,"
+        if hour < 21 { return "Good Evening," }
+        return "Good Night," // 9 PM onwards
     }
     
     func forceLogout() {
@@ -232,13 +234,25 @@ class HomeViewModel: ObservableObject {
                 }
             }
             
+            // 4. Trigger Smart Notifications (Background)
+            let currentToken = token // avoid capture issues
+            Task {
+                await self.checkSmartNotifications(token: currentToken)
+            }
+            
         } catch {
             print("⚠️ Data Fetch Failed: \(error.localizedDescription)")
             
             // 🚨 PRIORITY 1: Check for 401 Auth Error FIRST
             if let urlError = error as? URLError, urlError.code == .userAuthenticationRequired {
-                print("💀 401 Detected - Logging Out Immediately (Ignoring Cache)")
-                self.forceLogout()
+                print("💀 401 Detected - Ignoring Auto-Logout as requested.")
+                // self.forceLogout() // ❌ DISABLED to prevent loop
+                
+                // Show Error but keep data if possible
+                if self.userData == nil {
+                     self.errorMessage = "Session Expired. Please Logout."
+                     self.isLoading = false
+                }
                 return
             }
 
@@ -329,5 +343,21 @@ class HomeViewModel: ObservableObject {
                 print("❌ Failed to decode image data")
             }
         }.resume()
+    }
+    
+    // ✅ 4. Smart Notifications (New feature)
+    func checkSmartNotifications(token: String) async {
+        do {
+            // Already have `self.courses` (Attendance data)
+            // Need to fetch Schedule for Tomorrow
+            print("🧠 Fetching schedule for smart alerts...")
+            let schedule = try await APIManager.fetchWeeklySchedule(token: token)
+            
+            // Handover to Monitor
+            AttendanceMonitor.shared.checkAndScheduleReminders(courses: self.courses, schedule: schedule)
+            
+        } catch {
+            print("⚠️ Failed to fetch schedule for notifications: \(error)")
+        }
     }
 }

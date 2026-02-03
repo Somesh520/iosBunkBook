@@ -5,8 +5,14 @@ struct BunkBookApp: App {
     @AppStorage("authToken") var authToken: String?
     @State private var isSplashFinished = false
     
+    
     // ✅ Shared ViewModel taaki data Splash Screen se Home tak flow kare
     @StateObject private var sharedViewModel = HomeViewModel()
+    
+    init() {
+        // Request Notification Permission on Launch
+        NotificationManager.shared.requestPermission()
+    }
     
     var body: some Scene {
         WindowGroup {

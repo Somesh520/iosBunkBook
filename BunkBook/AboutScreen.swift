@@ -71,6 +71,16 @@ struct AboutScreen: View {
                     .font(.caption)
                     .foregroundColor(.gray)
                     .padding(.bottom, 20)
+                
+                // 🔔 Test Notification Button (Debug)
+                Button("Test Notification (5s Delay)") {
+                    NotificationManager.shared.scheduleNotification(
+                        title: "BunkBook",
+                        body: "This is a test notification!",
+                        timeInterval: 5
+                    )
+                }
+                .padding(.bottom, 40)
             }
         }
         .background(Color(uiColor: .systemGroupedBackground))

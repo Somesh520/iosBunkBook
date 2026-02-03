@@ -4,6 +4,8 @@ struct HomeScreen: View {
     @ObservedObject var viewModel: HomeViewModel
     @AppStorage("authToken") var authToken: String? // 💾 Logout ke liye zaroori hai
 
+    @State private var showLogoutAlert = false // 🚨 Logout Alert State
+
     // 🎨 Theme Colors
     let cardBg = Color(uiColor: .secondarySystemGroupedBackground).opacity(0.9)
 
@@ -61,8 +63,7 @@ struct HomeScreen: View {
                         
                         // 🚪 LOGOUT BUTTON (Ye zaroori hai 401 fix karne ke liye)
                         Button(action: {
-                            print("🚪 User Manually Logged Out")
-                            authToken = nil // Token delete -> Login Screen aa jayegi
+                            showLogoutAlert = true
                         }) {
                             Label("Logout & Re-Login", systemImage: "rectangle.portrait.and.arrow.right")
                                 .fontWeight(.bold)
@@ -94,7 +95,7 @@ struct HomeScreen: View {
                                 Spacer()
                                 
                                 Button(action: {
-                                    withAnimation { authToken = nil }
+                                    showLogoutAlert = true
                                 }) {
                                     Image(systemName: "power")
                                         .font(.system(size: 20, weight: .bold))
@@ -108,6 +109,17 @@ struct HomeScreen: View {
                             }
                             .padding(.horizontal)
                             .padding(.top, 10)
+                            .alert("Logout", isPresented: $showLogoutAlert) {
+                                Button("Cancel", role: .cancel) { }
+                                Button("Logout", role: .destructive) {
+                                    withAnimation {
+                                        authToken = nil // Token delete -> Login Screen aa jayegi
+                                    }
+                                }
+                            } message: {
+                                Text("Are you sure you want to logout?")
+                            }
+
                             
                             // --- HEADER SECTION (Profile Card + Summary) ---
                             StudentProfileCard(

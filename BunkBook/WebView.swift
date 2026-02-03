@@ -9,14 +9,10 @@ struct BunkWebView: UIViewRepresentable {
     @Binding var isLoading: Double
     var onMessage: (String) -> Void
 
-    // 🚀 Performance: Shared Process Pool
-    static let sharedProcessPool = WKProcessPool()
-
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
-        config.processPool = BunkWebView.sharedProcessPool // ✅ Faster Re-init
         
         // 🔥 CRITICAL FIX: Cookies/Cache enable
         config.websiteDataStore = WKWebsiteDataStore.default()
