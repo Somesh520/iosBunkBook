@@ -7,7 +7,7 @@ struct BunkBookApp: App {
     
     // ✅ Shared ViewModel taaki data Splash Screen se Home tak flow kare
     @StateObject private var sharedViewModel = HomeViewModel()
-    
+
     var body: some Scene {
         WindowGroup {
             if isSplashFinished {
