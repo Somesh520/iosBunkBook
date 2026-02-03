@@ -12,6 +12,34 @@ struct LoginPage: View {
     @State private var showPassword = false
     @State private var loginAttempted = false
     @State private var isSuccess = false // 🙈 Hide WebView immediately on success
+    
+    let loginURL = URL(string: "https://kiet.cybervidya.net/")!
+    
+    // 🛡️ ANTI-BOT USER AGENT
+    // ❌ Disabled Custom UA to fix "Low Captcha Score"
+    let userAgent = "" 
+    
+    // ⚡️ Fast Login Script (Token Capture - Runs Continuously)
+    let fastLoginScript = """
+      (function() {
+        var check = setInterval(function() {
+            var token = localStorage.getItem('authenticationtoken');
+            if (!token) {
+                 token = sessionStorage.getItem('authenticationtoken');
+            }
+            if (!token) {
+                 // Try to find in cookie
+                 var match = document.cookie.match(new RegExp('(^| )authenticationtoken=([^;]+)'));
+                 if (match) token = match[2];
+            }
+
+            if (token && token.length > 10) { 
+                clearInterval(check);
+                window.webkit.messageHandlers.ReactNativeWebView.postMessage(JSON.stringify({ token: token }));
+            }
+        }, 2000); // 🐢 Changed to 2s to avoid "Low Captcha Score"
+      })();
+    """
 
     var body: some View {
         ZStack {
