@@ -88,7 +88,7 @@ struct HomeScreen: View {
                             
                             // 🏁 TOP BAR (Logo + Logout)
                             HStack {
-                                Text("BunkBook")
+                                Text("K-Sync")
                                     .font(.system(size: 28, weight: .black, design: .rounded))
                                     .foregroundColor(.primary)
                                 

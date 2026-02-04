@@ -43,7 +43,7 @@ struct AboutScreen: View {
                                 .shadow(radius: 5)
                             
                             VStack(spacing: 5) {
-                                Text("BunkBook")
+                                Text("K-Sync")
                                     .font(.title)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)

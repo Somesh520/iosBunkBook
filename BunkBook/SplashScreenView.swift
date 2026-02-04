@@ -7,11 +7,11 @@ struct SplashScreenView: View {
     @ObservedObject var viewModel: HomeViewModel
     
     // Animation States
-    @State private var letterStates: [Bool] = Array(repeating: false, count: 8)
+    @State private var letterStates: [Bool] = Array(repeating: false, count: 6)
     @State private var isLineExpanded = false
     @State private var showTagline = false
     
-    let characters = Array("Bunkbook")
+    let characters = Array("K-Sync")
     
     var body: some View {
         ZStack {
@@ -55,7 +55,7 @@ struct SplashScreenView: View {
                 
                 // Tagline
                 if showTagline {
-                    Text("OFFICIAL MANAGER FOR UNOFFICIAL HOLIDAYS")
+                    Text("It syncs your timetable, results and attendance")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(Color.blue)
                         .tracking(0.5)
