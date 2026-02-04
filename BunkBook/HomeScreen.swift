@@ -144,6 +144,49 @@ struct HomeScreen: View {
                             .padding(.horizontal)
                             .padding(.top, 10)
 
+                            // 🗓️ Calendar Button
+                            NavigationLink(destination: EventsScreen()) {
+                                HStack {
+                                    ZStack {
+                                        Circle()
+                                            .fill(LinearGradient(colors: [.purple, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                            .frame(width: 45, height: 45)
+                                        
+                                        Image(systemName: "calendar.badge.clock")
+                                            .font(.title3)
+                                            .foregroundColor(.white)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Academic Calendar")
+                                            .font(.headline)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.primary)
+                                        
+                                        Text("Holidays & Exams")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .font(.headline)
+                                        .foregroundColor(.gray.opacity(0.8))
+                                }
+                                .padding(12)
+                                .background(
+                                    ZStack {
+                                        Color.gray.opacity(0.1) // Grey Tint
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    }
+                                )
+                                .cornerRadius(16)
+                            }
+                            .padding(.horizontal)
+                            .padding(.bottom, 10)
+                            
                             // --- SUBJECTS HEADER ---
                             HStack {
                                 Text("Your Subjects")
