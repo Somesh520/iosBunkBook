@@ -38,18 +38,24 @@ struct ExamResultView: View {
                         .padding(.horizontal)
                         .padding(.top)
                         
-                        // 📚 Semesters List
-                        if let semesters = scores.studentSemesterWiseMarksDetailsList {
-                            VStack(spacing: 15) {
-                                ForEach(semesters) { semester in
-                                    SemesterCard(semester: semester)
+                        // 🎯 Target CGPA Calculator
+                        TargetCGPACalculatorView(
+                            currentCGPA: scores.cgpa ?? 0.0,
+                            completedSemesters: scores.studentSemesterWiseMarksDetailsList?.count ?? 0
+                        )
+                        
+                            // 📚 Semesters List
+                            if let semesters = scores.studentSemesterWiseMarksDetailsList {
+                                VStack(spacing: 15) {
+                                    ForEach(semesters) { semester in
+                                        SemesterCard(semester: semester)
+                                    }
                                 }
+                                .padding(.horizontal)
                             }
-                            .padding(.horizontal)
                         }
                     }
                     .padding(.bottom, 20)
-                }
                 .refreshable {
                     await viewModel.fetchScores()
                 }
@@ -75,6 +81,143 @@ struct ExamResultView: View {
                 await viewModel.fetchScores()
             }
         }
+    }
+}
+
+// 🎯 Target CGPA Calculator
+struct TargetCGPACalculatorView: View {
+    let currentCGPA: Double
+    let completedSemesters: Int
+    let totalSemesters: Int = 8
+    
+    @State private var targetCGPA: Double
+    
+    init(currentCGPA: Double, completedSemesters: Int) {
+        self.currentCGPA = currentCGPA
+        self.completedSemesters = completedSemesters
+        _targetCGPA = State(initialValue: currentCGPA + 0.5) // Default target slightly higher
+    }
+    
+    var body: some View {
+        let remainingSemesters = totalSemesters - completedSemesters
+        
+        VStack(spacing: 15) {
+            // Header
+            HStack {
+                Image(systemName: "target")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+                Text("Target Goal")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+            
+            if remainingSemesters > 0 {
+                // Slider Input
+                VStack(spacing: 5) {
+                    HStack {
+                        Text("Desired CGPA")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(String(format: "%.1f", targetCGPA))
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Slider(value: $targetCGPA, in: 7.0...10.0, step: 0.1)
+                        .accentColor(.blue)
+                }
+                
+                // Calculation Result
+                let requiredSGPA = calculateRequiredSGPA()
+                
+                HStack(spacing: 15) {
+                    // Result Box
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Required SGPA")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        if requiredSGPA > 10.0 {
+                            Text("Impossible 😢")
+                                .font(.headline)
+                                .foregroundColor(.red)
+                        } else {
+                            Text(String(format: "%.2f", requiredSGPA))
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(getDifficultyColor(requiredSGPA))
+                            
+                            Text("for next \(remainingSemesters) semesters")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Difficulty Indicator
+                    if requiredSGPA <= 10.0 {
+                        ZStack {
+                            Circle()
+                                .trim(from: 0, to: 0.75)
+                                .stroke(Color.gray.opacity(0.2), lineWidth: 6)
+                                .frame(width: 50, height: 50)
+                                .rotationEffect(.degrees(135))
+                            
+                            Circle()
+                                .trim(from: 0, to: min(CGFloat(requiredSGPA / 10.0) * 0.75, 0.75))
+                                .stroke(getDifficultyColor(requiredSGPA), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                .frame(width: 50, height: 50)
+                                .rotationEffect(.degrees(135))
+                            
+                            Text(getDifficultyEmoji(requiredSGPA))
+                                .font(.title2)
+                        }
+                    } else {
+                         Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.red)
+                    }
+                }
+                .padding()
+                .background(Color(uiColor: .secondarySystemBackground))
+                .cornerRadius(12)
+                
+            } else {
+                Text("Congratulations! You have completed all semesters.")
+                    .font(.subheadline)
+                    .foregroundColor(.green)
+                    .padding()
+            }
+        }
+        .padding(20)
+        .background(Color(uiColor: .systemBackground))
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .padding(.horizontal)
+    }
+    
+    // 🧮 Calculation Logic
+    func calculateRequiredSGPA() -> Double {
+        let totalPointsNeeded = targetCGPA * Double(totalSemesters)
+        let currentPoints = currentCGPA * Double(completedSemesters)
+        let remainingPointsNeeded = totalPointsNeeded - currentPoints
+        return remainingPointsNeeded / Double(totalSemesters - completedSemesters)
+    }
+    
+    func getDifficultyColor(_ sgpa: Double) -> Color {
+        if sgpa > 9.5 { return .red }      // Very Hard
+        if sgpa > 8.5 { return .orange }   // Hard
+        return .green                      // Achievable
+    }
+    
+    func getDifficultyEmoji(_ sgpa: Double) -> String {
+        if sgpa > 9.5 { return "🔥" }
+        if sgpa > 8.5 { return "😅" }
+        return "😎"
     }
 }
 
@@ -199,3 +342,4 @@ struct SemesterCard: View {
         }
     }
 }
+

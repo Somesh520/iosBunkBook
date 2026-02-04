@@ -1,148 +1,165 @@
 import SwiftUI
 
+// MARK: - Data Model
 struct DeveloperProfile: Identifiable {
     let id = UUID()
     let name: String
-    let role: String
     let color: Color
     let linkedinURL: String
-    let image: String // Placeholder for now
+    let initial: String
 }
 
 struct AboutScreen: View {
-    @Environment(\.openURL) var openURL
-    
+    // Developers Data
     let developers = [
-        DeveloperProfile(name: "Satyam Singh", role: "Developer", color: .green, linkedinURL: "https://www.linkedin.com/in/satyam-singh-4510b9323/", image: "person.fill"),
-        DeveloperProfile(name: "Somesh Tiwari", role: "Developer", color: .blue, linkedinURL: "https://www.linkedin.com/in/somesh-tiwari-236555322/", image: "person.fill"),
-        DeveloperProfile(name: "Vishek Tyagi", role: "Developer", color: .orange, linkedinURL: "https://www.linkedin.com/in/vishek-tyagi-a42b18313/", image: "person.fill")
+        DeveloperProfile(name: "Satyam Singh", color: .teal, linkedinURL: "https://www.linkedin.com/in/satyam-singh-4510b9323/", initial: "S"),
+        DeveloperProfile(name: "Somesh Tiwari", color: .indigo, linkedinURL: "https://www.linkedin.com/in/somesh-tiwari-236555322/", initial: "S"),
+        DeveloperProfile(name: "Vishek Tyagi", color: .orange, linkedinURL: "https://www.linkedin.com/in/vishek-tyagi-a42b18313/", initial: "V")
     ]
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 25) {
-                // 🎨 Header (Original Simple Style)
-                ZStack {
-                    LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
-                        .frame(height: 200)
-                        .cornerRadius(20)
-                        .offset(y: -50)
-                        .padding(.bottom, -50)
-                    
-                    VStack {
-                        Image("AppLogo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 120, height: 120)
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.white, lineWidth: 4))
-                            .shadow(radius: 10)
+        NavigationStack {
+            ZStack {
+                // 1. Background: Blurred Image
+                GeometryReader { geometry in
+                    Image("aboutbackground") // Ensure asset name is correct
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                        .blur(radius: 2)
+                        .overlay(Color.black.opacity(0.3))
+                }
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 30) {
                         
-                        Text("BunkBook")
-                            .font(.system(size: 32, weight: .black, design: .rounded))
-                            .foregroundColor(.white)
+                        // 2. Header
+                        VStack(spacing: 12) {
+                            Image(systemName: "book.pages.fill")
+                                .font(.system(size: 50))
+                                .foregroundStyle(.white.opacity(0.9))
+                                .shadow(radius: 5)
+                            
+                            VStack(spacing: 5) {
+                                Text("BunkBook")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                
+                                Text("v2.0.1")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 4)
+                                    .background(.ultraThinMaterial)
+                                    .cornerRadius(10)
+                            }
+                        }
+                        .padding(.top, 40)
                         
-                        Text("v1.0.1")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.top, 2)
+                        // 3. Developers List (Separate Cards)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("CREATORS")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 16)
+                            
+                            // ⚡️ Main Change: Spacing 15 between cards
+                            VStack(spacing: 15) {
+                                ForEach(developers) { dev in
+                                    DeveloperCardSeparate(profile: dev)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        Spacer(minLength: 20)
+                        
+                        // 4. Footer
+                        VStack(spacing: 16) {
+                            Text("Made with ❤️ for KIET Students")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.9))
+                            
+                            Button(action: {
+                                print("Test Notification")
+                            }) {
+                                Text("Test Notification")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(.ultraThinMaterial)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(20)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .stroke(.white.opacity(0.3), lineWidth: 1)
+                                    )
+                            }
+                        }
+                        .padding(.bottom, 20)
                     }
-                    .padding(.top, 40)
                 }
-                
-                // 👨‍💻 Developers Section
-                Text("Meet the Developers")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                
-                VStack(spacing: 16) {
-                    ForEach(developers) { dev in
-                        DeveloperCard(profile: dev)
-                    }
-                }
-                .padding(.horizontal)
-                
-                Spacer()
-                
-                // Footer
-                Text("Made with ❤️ for KIET Students")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .padding(.bottom, 20)
-                
-                // 🔔 Test Notification Button (Debug)
-                Button("Test Notification (5s Delay)") {
-                    NotificationManager.shared.scheduleNotification(
-                        title: "BunkBook",
-                        body: "This is a test notification!",
-                        timeInterval: 5
-                    )
-                }
-                .padding(.bottom, 40)
             }
         }
-        .background(Color(uiColor: .systemGroupedBackground))
-        .ignoresSafeArea(edges: .top)
     }
 }
 
-// Simple Original Card + LinkedIn
-struct DeveloperCard: View {
+// 🎴 Separate Glass Card Component
+struct DeveloperCardSeparate: View {
     let profile: DeveloperProfile
-    @Environment(\.openURL) var openURL
     
     var body: some View {
-        HStack(spacing: 15) {
-            // Avatar
-            ZStack {
-                Circle()
-                    .fill(profile.color.opacity(0.1))
-                    .frame(width: 50, height: 50)
-                
-                Text(String(profile.name.prefix(1)))
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(profile.color)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(profile.name)
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                Text(profile.role)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(Color(uiColor: .tertiarySystemGroupedBackground))
-                    .cornerRadius(4)
-            }
-            
-            Spacer()
-            
-            // Link Button
-            Button(action: {
-                if let url = URL(string: profile.linkedinURL) {
-                    openURL(url)
+        Link(destination: URL(string: profile.linkedinURL)!) {
+            HStack(spacing: 16) {
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(profile.color.opacity(0.2))
+                        .frame(width: 44, height: 44)
+                    
+                    Text(profile.initial)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
                 }
-            }) {
-                Image(systemName: "link")
-                    .font(.system(size: 20, weight: .semibold)) // Bigger icon
-                    .foregroundColor(.blue.opacity(0.8))
-                    .padding(10)
-                    .background(Color.blue.opacity(0.1))
-                    .clipShape(Circle())
+                
+                // Name (Highlighted)
+                Text(profile.name)
+                    .font(.body)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.white.opacity(0.15))
+                            .stroke(Color.white.opacity(0.3), lineWidth: 0.5)
+                    )
+                
+                Spacer()
+                
+                // Icon
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.6))
             }
+            .padding(16)
+            // 👇 Card Styling moved here for separation
+            .background(.ultraThinMaterial)
+            .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(.white.opacity(0.2), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         }
-        .padding()
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

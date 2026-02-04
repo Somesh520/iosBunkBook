@@ -102,7 +102,7 @@ struct CourseCard: View {
     
     var statusSubtitle: String {
         if safeBunks > 0 {
-            return "You can miss \(safeBunks) more classes."
+            return "Emergency Buffer: \(safeBunks) classes available."
         } else if percent >= 75 {
             return "Check your calculator! You can't miss any."
         } else {

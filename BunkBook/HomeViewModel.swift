@@ -221,7 +221,31 @@ class HomeViewModel: ObservableObject {
     }
     
     func forceLogout() {
+        // 1. Clear Auth Token
         UserDefaults.standard.removeObject(forKey: "authToken")
+        
+        // 2. Clear Cache
+        UserDefaults.standard.removeObject(forKey: kCacheUser)
+        UserDefaults.standard.removeObject(forKey: kCacheDashboard)
+        UserDefaults.standard.removeObject(forKey: kCacheCourses)
+        
+        // 3. Reset State
+        self.userData = nil
+        self.dashboardData = nil
+        self.courses = []
+        self.profileImage = nil
+        self.exams = []
+        self.examScores = nil
+        self.hallTicketSessions = []
+        self.selectedSession = nil
+        self.hallTickets = []
+        
+        // 4. Reset Flags
+        self.hasFetchedExams = false
+        self.hasFetchedScores = false
+        self.hasFetchedSessions = false
+        
+        print("🔓 User Logged Out & Data Cleared")
     }
     
     // ✅ Caching Keys
@@ -298,14 +322,10 @@ class HomeViewModel: ObservableObject {
             
             // 🚨 PRIORITY 1: Check for 401 Auth Error FIRST
             if let urlError = error as? URLError, urlError.code == .userAuthenticationRequired {
-                print("💀 401 Detected - Ignoring Auto-Logout as requested.")
-                // self.forceLogout() // ❌ DISABLED to prevent loop
-                
-                // Show Error but keep data if possible
-                if self.userData == nil {
-                     self.errorMessage = "Session Expired. Please Logout."
-                     self.isLoading = false
-                }
+                print("💀 401 Detected - Auto-logout triggered.")
+                self.forceLogout() // ✅ ENABLED to clear expired token
+                self.errorMessage = "Session Expired. Please login again."
+                self.isLoading = false
                 return
             }
 

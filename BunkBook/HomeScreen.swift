@@ -125,7 +125,8 @@ struct HomeScreen: View {
                                 Button("Cancel", role: .cancel) { }
                                 Button("Logout", role: .destructive) {
                                     withAnimation {
-                                        authToken = nil // Token delete -> Login Screen aa jayegi
+                                        viewModel.forceLogout() // ✅ Clear Data properly
+                                        authToken = nil // Trigger Navigation
                                     }
                                 }
                             } message: {
