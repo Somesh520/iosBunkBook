@@ -1,6 +1,6 @@
 import SwiftUI
 
-// 1. Circular Progress View
+
 struct CircularProgressView: View {
     let percentage: Double
     
@@ -36,12 +36,11 @@ struct CircularProgressView: View {
     }
 }
 
-// 2. Course Card (With Bunk Logic)
-// 2. Course Card (Redesigned Layout)
+
 struct CourseCard: View {
     let course: RegisteredCourse
     
-    // --- 🧮 Bunk Calculation Logic ---
+
     
     var present: Int {
         course.studentCourseCompDetails?.first?.presentLecture ?? 0
@@ -72,12 +71,11 @@ struct CourseCard: View {
         return required > 0 ? required : 0
     }
     
-    // --- UI Logic ---
+
     
     var statusColor: Color {
         if percent >= 75 { return .green }
-        // Simple buffer for "Edge" (e.g. 75 exactly or close to dropping)
-        // but for now, < 75 is Red/Orange
+
         if percent >= 65 { return .orange }
         return .red
     }
@@ -117,7 +115,7 @@ struct CourseCard: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(course.courseName)
-                        .font(.system(size: 18, weight: .bold)) // Slightly Bigger
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.primary)
                         .lineLimit(2)
                     
@@ -128,17 +126,16 @@ struct CourseCard: View {
                 
                 Spacer()
                 
-                // Percentage Badge
-                Text("\(String(format: "%.1f", percent))%") // Decimal Precision
+                Text("\(String(format: "%.1f", percent))%")
                 .font(.system(size: 14, weight: .bold))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(statusColor.opacity(0.15))
-                .foregroundColor(statusColor) // Darker Text
+                .foregroundColor(statusColor)
                 .cornerRadius(12)
             }
             
-            // Row 2: Linear Progress Bar
+
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Capsule()
@@ -153,7 +150,7 @@ struct CourseCard: View {
             }
             .frame(height: 8)
             
-            // Row 3: Status Box
+
             HStack(alignment: .center, spacing: 12) {
                 Image(systemName: statusIcon)
                     .font(.title2)
@@ -176,7 +173,7 @@ struct CourseCard: View {
             .background(statusBoxColor)
             .cornerRadius(12)
             
-            // 🔗 View Details Link (Subtle)
+
             HStack {
                 Spacer()
                 Text("View Details ›")
@@ -196,18 +193,18 @@ struct CourseCard: View {
     }
 }
 
-// 3. Student Profile Card (Redesigned Split Layout)
+
 struct StudentProfileCard: View {
     let user: UserDetails?
     let greeting: String
     let profileImage: UIImage?
-    let attendancePercentage: Double // Passed from DashboardData
+    let attendancePercentage: Double
     
     var body: some View {
         VStack(spacing: 15) {
-            // Card 1: Personal Info
+
             VStack(alignment: .leading, spacing: 15) {
-                // Card 1: Personal Info
+
                 VStack(alignment: .leading, spacing: 15) {
                     // Header with Image
                     HStack(spacing: 12) {
@@ -303,14 +300,14 @@ struct StudentProfileCard: View {
         }
     }
     
-    // Helper Row
+
     struct ProfileRow: View {
         let icon: String
         let title: String
         let value: String
         
         var body: some View {
-            HStack(spacing: 15) { // Fixed Icons Spacing
+            HStack(spacing: 15) {
                 Image(systemName: icon)
                     .font(.body)
                     .foregroundColor(.gray)
@@ -324,7 +321,7 @@ struct StudentProfileCard: View {
                 
                 Text(value)
                     .font(.body)
-                    .fontWeight(.bold) // Bold Value
+                    .fontWeight(.bold)
                     .foregroundColor(.primary)
             }
             .padding(.vertical, 4)

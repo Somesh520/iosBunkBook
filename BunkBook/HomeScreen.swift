@@ -2,20 +2,18 @@ import SwiftUI
 
 struct HomeScreen: View {
     @ObservedObject var viewModel: HomeViewModel
-    @AppStorage("authToken") var authToken: String? // 💾 Logout ke liye zaroori hai
+    @AppStorage("authToken") var authToken: String?
 
-    @State private var showLogoutAlert = false // 🚨 Logout Alert State
+    @State private var showLogoutAlert = false
 
-    // 🎨 Theme Colors
     let cardBg = Color(uiColor: .secondarySystemGroupedBackground).opacity(0.9)
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // 1. Background
                 Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
                 
-                // Subtle Gradient Blob
+
                 Circle()
                     .fill(Color.blue.opacity(0.1))
                     .frame(width: 300, height: 300)
@@ -32,9 +30,9 @@ struct HomeScreen: View {
                             .padding(.top, 10)
                     }
                 } else if let error = viewModel.errorMessage {
-                    // ❌ ERROR STATE WITH LOGOUT BUTTON
+
                     VStack(spacing: 20) {
-                        Image(systemName: "lock.slash.fill") // Icon change kiya
+                        Image(systemName: "lock.slash.fill")
                             .font(.system(size: 60))
                             .foregroundColor(.red)
                             .padding(.bottom, 10)
@@ -48,7 +46,6 @@ struct HomeScreen: View {
                             .foregroundColor(.secondary)
                             .padding(.horizontal)
                         
-                        // 🔄 Retry Button
                         Button(action: {
                             Task { await viewModel.fetchData() }
                         }) {
@@ -61,7 +58,6 @@ struct HomeScreen: View {
                                 .cornerRadius(12)
                         }
                         
-                        // 🚪 LOGOUT BUTTON (Ye zaroori hai 401 fix karne ke liye)
                         Button(action: {
                             showLogoutAlert = true
                         }) {
@@ -82,11 +78,10 @@ struct HomeScreen: View {
                     .padding(30)
                     
                 } else {
-                    // ✅ MAIN CONTENT (Dashboard)
+
                     ScrollView {
                         VStack(spacing: 24) {
                             
-                            // 🏁 TOP BAR (Logo + Logout)
                             HStack {
                                 Text("K-Sync")
                                     .font(.system(size: 28, weight: .black, design: .rounded))
@@ -94,7 +89,6 @@ struct HomeScreen: View {
                                 
                                 Spacer()
                                 
-                                // 🔔 Notification Debug
                                 NavigationLink(destination: NotificationDebugView()) {
                                     Image(systemName: "bell.fill")
                                         .font(.system(size: 20))
@@ -125,8 +119,8 @@ struct HomeScreen: View {
                                 Button("Cancel", role: .cancel) { }
                                 Button("Logout", role: .destructive) {
                                     withAnimation {
-                                        viewModel.forceLogout() // ✅ Clear Data properly
-                                        authToken = nil // Trigger Navigation
+                                        viewModel.forceLogout()
+                                        authToken = nil
                                     }
                                 }
                             } message: {
@@ -134,7 +128,6 @@ struct HomeScreen: View {
                             }
 
                             
-                            // --- HEADER SECTION (Profile Card + Summary) ---
                             StudentProfileCard(
                                 user: viewModel.userData,
                                 greeting: viewModel.greeting,
@@ -144,7 +137,6 @@ struct HomeScreen: View {
                             .padding(.horizontal)
                             .padding(.top, 10)
 
-                            // 🗓️ Calendar Button
                             NavigationLink(destination: EventsScreen()) {
                                 HStack {
                                     ZStack {
@@ -177,7 +169,7 @@ struct HomeScreen: View {
                                 .padding(12)
                                 .background(
                                     ZStack {
-                                        Color.gray.opacity(0.1) // Grey Tint
+                                        Color.gray.opacity(0.1)
                                         RoundedRectangle(cornerRadius: 16)
                                             .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                                     }
@@ -187,7 +179,6 @@ struct HomeScreen: View {
                             .padding(.horizontal)
                             .padding(.bottom, 10)
                             
-                            // --- SUBJECTS HEADER ---
                             HStack {
                                 Text("Your Subjects")
                                     .font(.title3)
@@ -207,7 +198,6 @@ struct HomeScreen: View {
                             }
                             .padding(.horizontal)
 
-                            // --- COURSE LIST ---
                             LazyVStack(spacing: 16) {
                                 ForEach(viewModel.courses) { course in
                                     NavigationLink(destination: CourseDetailsScreen(

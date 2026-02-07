@@ -1,25 +1,24 @@
 import SwiftUI
 import Combine
 
-// ⚙️ API Configuration
+
 struct APIConfig {
     static let baseURL = "https://kiet.cybervidya.net/api"
     static let userDetailsURL = baseURL + "/info/student/fetch"
     static let dashboardURL = baseURL + "/student/dashboard/attendance"
     static let coursesURL = baseURL + "/student/dashboard/registered-courses"
     static let lectureWiseURL = baseURL + "/attendance/schedule/student/course/attendance/percentage"
-    static let examURL_New = baseURL + "/exam/schedule/student/exams" // 🔙 Reverted to match Android
+    static let examURL_New = baseURL + "/exam/schedule/student/exams"
     static let examURL_Old = baseURL + "/exam/schedule/student/exams"
     
     static let scoreURL = baseURL + "/exam/score/get/score"
 }
 
-// 🛠 API MANAGER
+
 @MainActor
 struct APIManager {
     static let userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
     
-    // 🚀 Performance: Static Formatter
     static let apiDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -64,7 +63,7 @@ struct APIManager {
             let wrapper = try JSONDecoder().decode(APIResponse<[ExamSchedule]>.self, from: data)
             return wrapper.data ?? []
         } catch {
-            // 🛡️ Handled "Exams not scheduled" 400 error as empty list
+
             if let urlError = error as? URLError, urlError.code == .badServerResponse {
                 print("ℹ️ No exams scheduled (400 caught)")
                 return []
@@ -101,7 +100,7 @@ struct APIManager {
         return wrapper.data?.first?.lectureList ?? []
     }
     
-    // 🎫 Hall Ticket APIs
+
     
     static func fetchExamSessions(token: String, studentId: Int) async throws -> [ExamSession] {
         let url = "\(APIConfig.baseURL)/exam/form/session/config/getById/student/\(studentId)"
@@ -124,22 +123,22 @@ struct APIManager {
         var request = URLRequest(url: url)
         setupHeaders(request: &request, token: token)
         
-        // Use downloadTask to get file location
+
         let (tempURL, response) = try await URLSession.shared.download(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw URLError(.badServerResponse)
         }
         
-        // Generate a suggested filename (e.g. from Content-Disposition or default)
-        // For now, simple default:
+
+
         let filename = "HallTicket_\(ticketId).pdf"
         
-        // Move from tempURL to a temporary accessible location
+
         let fileManager = FileManager.default
         let newURL = fileManager.temporaryDirectory.appendingPathComponent(filename)
         
-        // Remove if exists
+
         try? fileManager.removeItem(at: newURL)
         try fileManager.moveItem(at: tempURL, to: newURL)
         
@@ -172,19 +171,19 @@ struct APIManager {
     }
     
     private static func setupHeaders(request: inout URLRequest, token: String) {
-        // 🟢 Pass-through token exactly like Android (Auth logic handled by Token itself)
+
         request.addValue(token, forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue(getUserAgent(), forHTTPHeaderField: "User-Agent")
     }
     
-    // Helper helper to get clean UA
+
     static func getUserAgent() -> String {
         return "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
     }
 }
 
-// 🏠 VIEW MODEL
+
 @MainActor
 class HomeViewModel: ObservableObject {
     @Published var userData: UserDetails?
@@ -194,7 +193,7 @@ class HomeViewModel: ObservableObject {
     @Published var exams: [ExamSchedule] = []
     @Published var examScores: ScoreData?
     
-    // 🎫 Hall Ticket State
+
     @Published var hallTicketSessions: [ExamSession] = []
     @Published var selectedSession: ExamSession?
     @Published var hallTickets: [HallTicketOption] = []
@@ -213,23 +212,23 @@ class HomeViewModel: ObservableObject {
 
     var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
-        if hour < 4 { return "Good Night," } // Late Night
+        if hour < 4 { return "Good Night," }
         if hour < 12 { return "Good Morning," }
         if hour < 17 { return "Good Afternoon," }
         if hour < 21 { return "Good Evening," }
-        return "Good Night," // 9 PM onwards
+        return "Good Night,"
     }
     
     func forceLogout() {
-        // 1. Clear Auth Token
+
         UserDefaults.standard.removeObject(forKey: "authToken")
         
-        // 2. Clear Cache
+
         UserDefaults.standard.removeObject(forKey: kCacheUser)
         UserDefaults.standard.removeObject(forKey: kCacheDashboard)
         UserDefaults.standard.removeObject(forKey: kCacheCourses)
         
-        // 3. Reset State
+
         self.userData = nil
         self.dashboardData = nil
         self.courses = []
@@ -240,7 +239,7 @@ class HomeViewModel: ObservableObject {
         self.selectedSession = nil
         self.hallTickets = []
         
-        // 4. Reset Flags
+
         self.hasFetchedExams = false
         self.hasFetchedScores = false
         self.hasFetchedSessions = false
@@ -248,7 +247,7 @@ class HomeViewModel: ObservableObject {
         print("🔓 User Logged Out & Data Cleared")
     }
     
-    // ✅ Caching Keys
+
     private let kCacheUser = "CACHE_USER"
     private let kCacheDashboard = "CACHE_DASHBOARD"
     private let kCacheCourses = "CACHE_COURSES"
@@ -261,7 +260,7 @@ class HomeViewModel: ObservableObject {
             self.errorMessage = "Not Logged In"; self.isLoading = false; return
         }
         
-        // 1️⃣ Try fetching fresh data
+
         do {
             async let user = APIManager.fetchUserDetails(token: token)
             async let dash = APIManager.fetchDashboard(token: token)
@@ -271,7 +270,7 @@ class HomeViewModel: ObservableObject {
             let fetchedDash = try await dash
             let fetchedCourses = try await course
             
-            // ✅ Save to Cache
+
             if let encodedUser = try? JSONEncoder().encode(fetchedUser) { UserDefaults.standard.set(encodedUser, forKey: kCacheUser) }
             if let encodedDash = try? JSONEncoder().encode(fetchedDash) { UserDefaults.standard.set(encodedDash, forKey: kCacheDashboard) }
             if let encodedCourses = try? JSONEncoder().encode(fetchedCourses) { UserDefaults.standard.set(encodedCourses, forKey: kCacheCourses) }
@@ -284,14 +283,14 @@ class HomeViewModel: ObservableObject {
             self.isLoading = false
             print("✅ Dashboard Data Loaded (Fresh)")
             
-            // 🕵️‍♂️ BACKGROUND FETCH: Get Branch Name from Scores if missing
+
             if self.userData?.branchShortName == nil {
                 Task {
                     do {
                         let scores = try await APIManager.fetchExamScores(token: token)
                         if let branch = scores.branchShortName {
                             print("💡 Found Branch in Scores: \(branch)")
-                            // Patch UserData
+
                             let patchedUser = UserDetails(
                                 fullName: self.userData?.fullName ?? "",
                                 rollNumber: self.userData?.rollNumber,
@@ -300,7 +299,7 @@ class HomeViewModel: ObservableObject {
                                 profilePhoto: self.userData?.profilePhoto
                             )
                             self.userData = patchedUser
-                            // Update Cache
+
                             if let encodedUser = try? JSONEncoder().encode(patchedUser) { 
                                 UserDefaults.standard.set(encodedUser, forKey: kCacheUser) 
                             }
@@ -311,8 +310,8 @@ class HomeViewModel: ObservableObject {
                 }
             }
             
-            // 4. Trigger Smart Notifications (Background)
-            let currentToken = token // avoid capture issues
+
+            let currentToken = token
             Task {
                 await self.checkSmartNotifications(token: currentToken)
             }
@@ -320,16 +319,16 @@ class HomeViewModel: ObservableObject {
         } catch {
             print("⚠️ Data Fetch Failed: \(error.localizedDescription)")
             
-            // 🚨 PRIORITY 1: Check for 401 Auth Error FIRST
+
             if let urlError = error as? URLError, urlError.code == .userAuthenticationRequired {
                 print("💀 401 Detected - Auto-logout triggered.")
-                self.forceLogout() // ✅ ENABLED to clear expired token
+                self.forceLogout()
                 self.errorMessage = "Session Expired. Please login again."
                 self.isLoading = false
                 return
             }
 
-            // 2️⃣ Fallback to Cache (Only if NOT 401)
+
             print("Checking Cache...")
             if let dataUser = UserDefaults.standard.data(forKey: kCacheUser),
                let dataDash = UserDefaults.standard.data(forKey: kCacheDashboard),
@@ -392,7 +391,7 @@ class HomeViewModel: ObservableObject {
         self.isScoreLoading = false
     }
     
-    // 🎫 Hall Ticket Logic
+
     
     func fetchSessions() async {
         if hasFetchedSessions { return }
@@ -429,7 +428,7 @@ class HomeViewModel: ObservableObject {
     
     func fetchTickets(for sessionId: Int) async {
         self.isTicketLoading = true
-        self.hallTickets = [] // Clear previous
+        self.hallTickets = [] 
         guard let token = UserDefaults.standard.string(forKey: "authToken") else { return }
         
         do {
@@ -479,7 +478,7 @@ class HomeViewModel: ObservableObject {
         }.resume()
     }
     
-    // ✅ 4. Smart Notifications (New feature)
+
     func checkSmartNotifications(token: String) async {
         do {
             // Already have `self.courses` (Attendance data)

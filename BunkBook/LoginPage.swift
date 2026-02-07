@@ -2,24 +2,23 @@ import SwiftUI
 import WebKit
 
 struct LoginPage: View {
-    @AppStorage("authToken") var authToken: String? // 💾 Stores Raw Token
+    @AppStorage("authToken") var authToken: String?
     @State private var isLoading: Double = 1.0
     @State private var injectScript: String? = nil
     
-    // 📝 Native Form State
+
     @State private var username = ""
     @State private var password = ""
     @State private var showPassword = false
     @State private var loginAttempted = false
-    @State private var isSuccess = false // 🙈 Hide WebView immediately on success
+    @State private var isSuccess = false
     
     let loginURL = URL(string: "https://kiet.cybervidya.net/")!
     
-    // 🛡️ ANTI-BOT USER AGENT
-    // ❌ Disabled Custom UA to fix "Low Captcha Score"
+  
     let userAgent = "" 
     
-    // ⚡️ Fast Login Script (Token Capture - Runs Continuously)
+
     let fastLoginScript = """
       (function() {
         var check = setInterval(function() {
@@ -28,7 +27,7 @@ struct LoginPage: View {
                  token = sessionStorage.getItem('authenticationtoken');
             }
             if (!token) {
-                 // Try to find in cookie
+
                  var match = document.cookie.match(new RegExp('(^| )authenticationtoken=([^;]+)'));
                  if (match) token = match[2];
             }
@@ -37,13 +36,13 @@ struct LoginPage: View {
                 clearInterval(check);
                 window.webkit.messageHandlers.ReactNativeWebView.postMessage(JSON.stringify({ token: token }));
             }
-        }, 2000); // 🐢 Changed to 2s to avoid "Low Captcha Score"
+        }, 2000);
       })();
     """
 
     var body: some View {
         ZStack {
-            // 🕸️ WebView (Visible & Interactive)
+
             BunkWebView(
                 url: loginURL,
                 script: fastLoginScript,
@@ -53,16 +52,16 @@ struct LoginPage: View {
                 injectScript: $injectScript
             )
             .edgesIgnoringSafeArea(.all)
-            .opacity(isSuccess ? 0 : 1) // 🙈 Instant Hide
+            .opacity(isSuccess ? 0 : 1)
             
-            // 🌀 Loading Overlay
+
             if isLoading > 0.1 || isSuccess {
                 ZStack {
-                    Color.white.ignoresSafeArea() // Mask everything
+                    Color.white.ignoresSafeArea()
                     if !isSuccess {
                         ProgressView("Loading...")
                     } else {
-                        // Optional: Show "Success" or Logo while switching
+
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 60))
                             .foregroundColor(.green)
@@ -75,14 +74,12 @@ struct LoginPage: View {
         }
     }
 
-    // ... (rest of the file) ...
-
     func handleMessage(_ message: String) {
         guard let data = message.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               var token = json["token"] as? String else { return }
             
-        // 🧹 Clean Quote from JSON string
+
         if token.hasPrefix("\"") && token.hasSuffix("\"") {
             token = String(token.dropFirst().dropLast())
         }
@@ -93,9 +90,9 @@ struct LoginPage: View {
         print("\n🔑 TOKEN CAPTURED SUCCESS!")
         
         DispatchQueue.main.async {
-            self.isSuccess = true // 🙈 Trigger Mask
+            self.isSuccess = true
             
-            // Small delay to let mask appear before state change
+
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self.authToken = token
                 UserDefaults.standard.set(token, forKey: "authToken")
@@ -105,7 +102,7 @@ struct LoginPage: View {
     }
 }
 
-// Helper for Placeholder Color
+
 extension View {
     func placeholder<Content: View>(
         when shouldShow: Bool,

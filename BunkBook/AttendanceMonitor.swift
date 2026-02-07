@@ -6,11 +6,11 @@ class AttendanceMonitor {
     
     private init() {}
     
-    /// ✅ Main function: Check today's and tomorrow's classes
+    
     func checkAndScheduleReminders(courses: [RegisteredCourse], schedule: [TimetableEvent]) {
         print("🧠 Smart Monitor: Checking schedule for notifications...")
         
-        // 🔥 Clear old notifications first
+       
         clearAllScheduledNotifications()
         
         let today = Date()

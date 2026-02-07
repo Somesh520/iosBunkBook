@@ -9,7 +9,7 @@ struct EventsScreen: View {
         return Dictionary(grouping: events, by: { $0.month })
     }
     
-    // Sort months chronologically
+
     var sortedMonths: [String] {
         let monthsOrder = ["January 2026", "February 2026", "March 2026", "April 2026", "May 2026", "June 2026"]
         return filteredEvents.keys.sorted {
@@ -22,7 +22,7 @@ struct EventsScreen: View {
             Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Segmented Control
+
                 Picker("View Type", selection: $selectedTab) {
                     Text("Activities").tag(EventType.activity)
                     Text("Holidays").tag(EventType.holiday)
@@ -52,7 +52,7 @@ struct EventsScreen: View {
     }
 }
 
-// 🗓️ Month Header View
+
 struct MonthHeader: View {
     let title: String
     
@@ -69,13 +69,13 @@ struct MonthHeader: View {
     }
 }
 
-// 📌 Event Row View
+
 struct EventRow: View {
     let event: AcademicEvent
     
     var body: some View {
         HStack(alignment: .top, spacing: 15) {
-            // Date Box
+
             VStack(spacing: 4) {
                 Text(extractDay(from: event.dateRange))
                     .font(.title2)
@@ -91,12 +91,12 @@ struct EventRow: View {
             .frame(width: 60)
             .padding(.vertical, 4)
             
-            // Divider
+
             Capsule()
                 .fill(event.type.color)
                 .frame(width: 4)
             
-            // Event Details
+
             VStack(alignment: .leading, spacing: 6) {
                 Text(event.title)
                     .font(.body)
@@ -110,7 +110,7 @@ struct EventRow: View {
                         .foregroundColor(.secondary)
                 }
                 
-                Text(event.dateRange) // Full Date Range
+                Text(event.dateRange)
                     .font(.caption2)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -127,7 +127,7 @@ struct EventRow: View {
         .padding(.horizontal)
     }
     
-    // Helpers to extract display date (e.g. "22nd")
+
     func extractDay(from range: String) -> String {
         return range.components(separatedBy: " ").first ?? ""
     }
